@@ -1,7 +1,6 @@
 package threader_test
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -10,11 +9,9 @@ import (
 )
 
 func TestThreader(t *testing.T) {
-	ctx := context.Background()
-
 	t.Run("Default Threader", func(t *testing.T) {
 		t.Run("Panic is caught", func(t *testing.T) {
-			threader.Go(ctx, func() {
+			threader.DefaultThreader.Go(func() {
 				panic(99)
 			})
 		})
@@ -22,13 +19,13 @@ func TestThreader(t *testing.T) {
 	t.Run("Custom Threader", func(t *testing.T) {
 		t.Run("Panic", func(t *testing.T) {
 			threaderInstance := threader.New()
-			threaderInstance.Go(ctx, func() {
+			threaderInstance.Go(func() {
 				// Empty 1
 			})
-			threaderInstance.Go(ctx, func() {
+			threaderInstance.Go(func() {
 				// Empty 2
 			})
-			threaderInstance.Go(ctx, func() {
+			threaderInstance.Go(func() {
 				panic(99)
 			})
 			err := threaderInstance.Wait()
@@ -39,13 +36,13 @@ func TestThreader(t *testing.T) {
 		})
 		t.Run("Error", func(t *testing.T) {
 			threaderInstance := threader.New()
-			threaderInstance.GoWithErr(ctx, func() error {
+			threaderInstance.GoWithErr(func() error {
 				return nil
 			})
-			threaderInstance.GoWithErr(ctx, func() error {
+			threaderInstance.GoWithErr(func() error {
 				return nil
 			})
-			threaderInstance.GoWithErr(ctx, func() error {
+			threaderInstance.GoWithErr(func() error {
 				return fmt.Errorf("my error")
 			})
 			err := threaderInstance.Wait()

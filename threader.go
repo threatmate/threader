@@ -1,7 +1,6 @@
 package threader
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"sync"
@@ -14,24 +13,17 @@ import (
 // Typically, multiple threads will attempt to modify some shared state.  You may use the
 // Lock and Unlock functions to guard this state.
 type Threader struct {
-	wg          sync.WaitGroup
-	mutex       sync.Mutex
-	errs        []error
-	publicMutex sync.Mutex
+	wg          sync.WaitGroup // This is the wait group that waits for all threads to finish.
+	mutex       sync.Mutex     // This is the mutex that guards the errs slice.
+	errs        []error        // This is a list of errors from the running threads.
+	publicMutex sync.Mutex     // This is the public mutex that can be used to guard shared state; the caller can use this instead of creating their own mutex.  The Threader itself will never use this.
 }
 
 // DefaultThreader is the default Threader.
+//
+// This can be used to defend against panics without having to manage a Threader.
+// However, it is best practice to create a Threader instance.
 var DefaultThreader = &Threader{}
-
-// Go runs a go routine using the default Threader.
-func Go(ctx context.Context, fn func()) {
-	DefaultThreader.Go(ctx, fn)
-}
-
-// GoWithErr runs a go routine using the default Threader.
-func GoWithErr(ctx context.Context, fn func() error) {
-	DefaultThreader.GoWithErr(ctx, fn)
-}
 
 // New returns a new Threader.
 func New() *Threader {
@@ -53,12 +45,12 @@ func (r *Threader) Unlock() {
 }
 
 // Go run a function in a goroutine.
-func (r *Threader) Go(ctx context.Context, fn func()) {
-	r.GoWithErr(ctx, func() error { fn(); return nil })
+func (r *Threader) Go(fn func()) {
+	r.GoWithErr(func() error { fn(); return nil })
 }
 
 // GoWithErr runs a function in a goroutine.
-func (r *Threader) GoWithErr(ctx context.Context, fn func() error) {
+func (r *Threader) GoWithErr(fn func() error) {
 	r.wg.Add(1)
 	go func() {
 		defer r.wg.Done()
