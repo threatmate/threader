@@ -3,6 +3,7 @@ package threader
 import (
 	"errors"
 	"fmt"
+	"runtime/debug"
 	"sync"
 )
 
@@ -61,7 +62,7 @@ func (r *Threader) GoWithErr(fn func() error) {
 			// This also includes the main thread.
 			if value := recover(); value != nil {
 				r.mutex.Lock()
-				r.errs = append(r.errs, fmt.Errorf("panic: %v", value))
+				r.errs = append(r.errs, fmt.Errorf("panic: %v; stacktrace: %s", value, string(debug.Stack())))
 				r.mutex.Unlock()
 			}
 		}()
